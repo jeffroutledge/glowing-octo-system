@@ -22,7 +22,7 @@ func (cfg *apiConfig) handlerCreateUsers(w http.ResponseWriter, r *http.Request)
 		Name      string    `json:"name"`
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second) //TODO make this middleware
 	defer cancel()
 
 	decoder := json.NewDecoder(r.Body)

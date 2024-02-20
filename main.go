@@ -46,15 +46,13 @@ func main() {
 	v1Router := chi.NewRouter()
 	v1Router.Get("/readiness", handlerReadiness)
 	v1Router.Get("/err", handlerError)
+
 	v1Router.Post("/users", apiCfg.handlerCreateUsers)
 	v1Router.Get("/users", apiCfg.middlewareAuth(apiCfg.handlerGetUserByApiKey))
 
-	app.Mount("/v1", v1Router)
+	v1Router.Post("/feeds", apiCfg.middlewareAuth(apiCfg.handlerCreateFeed))
 
-	// srv := &http.Server{
-	// 	Addr:    ":" + port,
-	// 	Handler: app.HandleFunc,
-	// }
+	app.Mount("/v1", v1Router)
 
 	log.Printf("Serving on port %s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, app))

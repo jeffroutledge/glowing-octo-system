@@ -12,7 +12,7 @@ import (
 )
 
 type Feed struct {
-	ID        uuid.NullUUID
+	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Name      sql.NullString
