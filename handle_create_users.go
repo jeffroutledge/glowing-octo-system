@@ -40,7 +40,7 @@ func (cfg *apiConfig) handlerCreateUsers(w http.ResponseWriter, r *http.Request)
 	}
 
 	u := database.CreateUserParams{
-		ID:        uuid.NullUUID{UUID: uniqueID, Valid: true},
+		ID:        uniqueID,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Name:      sql.NullString{String: params.Name, Valid: true},
@@ -52,5 +52,5 @@ func (cfg *apiConfig) handlerCreateUsers(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, response{ID: user.ID.UUID, CreatedAt: user.CreatedAt, UpdatedAt: user.UpdatedAt, Name: user.Name.String})
+	respondWithJSON(w, http.StatusOK, response{ID: user.ID, CreatedAt: user.CreatedAt, UpdatedAt: user.UpdatedAt, Name: user.Name.String})
 }

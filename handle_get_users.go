@@ -28,7 +28,7 @@ func (cfg *apiConfig) handlerGetUserByApiKey(w http.ResponseWriter, r *http.Requ
 	}
 
 	res := response{
-		ID:        user.ID.UUID,
+		ID:        user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Name:      user.Name.String,
