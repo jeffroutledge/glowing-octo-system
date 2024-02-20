@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jeffroutledge/glowing-octo-system/internal/auth"
+	"github.com/jeffroutledge/glowing-octo-system/internal/database"
 )
 
-func (cfg *apiConfig) handlerGetUserByApiKey(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerGetUserByApiKey(w http.ResponseWriter, r *http.Request, u database.User) {
 	type response struct {
 		ID        uuid.UUID `json:"id"`
 		CreatedAt time.Time `json:"created_at"`
@@ -17,22 +17,12 @@ func (cfg *apiConfig) handlerGetUserByApiKey(w http.ResponseWriter, r *http.Requ
 		ApiKey    string    `json:"api_key"`
 	}
 
-	token, err := auth.GetApiToken(r.Header)
-	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
-	}
-
-	user, err := cfg.DB.GetUser(r.Context(), token)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-	}
-
 	res := response{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Name:      user.Name.String,
-		ApiKey:    user.ApiKey,
+		ID:        u.ID,
+		CreatedAt: u.CreatedAt,
+		UpdatedAt: u.UpdatedAt,
+		Name:      u.Name.String,
+		ApiKey:    u.ApiKey,
 	}
 
 	respondWithJSON(w, http.StatusOK, res)
