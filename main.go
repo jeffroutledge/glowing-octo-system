@@ -50,6 +50,7 @@ func main() {
 	v1Router.Post("/users", apiCfg.handlerCreateUsers)
 	v1Router.Get("/users", apiCfg.middlewareAuth(apiCfg.handlerGetUserByApiKey))
 
+	v1Router.Get("/feeds", apiCfg.handlerGetFeeds)
 	v1Router.Post("/feeds", apiCfg.middlewareAuth(apiCfg.handlerCreateFeed))
 
 	app.Mount("/v1", v1Router)
