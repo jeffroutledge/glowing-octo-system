@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -19,6 +20,18 @@ type apiConfig struct {
 func main() {
 	godotenv.Load(".env")
 	port := os.Getenv("PORT")
+	dbURL := os.Getenv("CONN")
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dbQueries := database.New(db)
+
+	apiCfg := apiConfig{
+		DB: dbQueries,
+	}
 
 	app := chi.NewRouter()
 
@@ -32,6 +45,7 @@ func main() {
 	v1Router := chi.NewRouter()
 	v1Router.Get("/readiness", handlerReadiness)
 	v1Router.Get("/err", handlerError)
+	v1Router.Post("/users", apiCfg.handlerCreateUsers)
 
 	app.Mount("/v1", v1Router)
 
