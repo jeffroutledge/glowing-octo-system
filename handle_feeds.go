@@ -70,3 +70,16 @@ func (cfg *apiConfig) handlerCreateFeed(w http.ResponseWriter, r *http.Request, 
 
 	respondWithJSON(w, http.StatusOK, res)
 }
+
+func (cfg *apiConfig) handlerGetFeeds(w http.ResponseWriter, r *http.Request) {
+	type response struct {
+		Feeds []database.Feed `json:"feeds"`
+	}
+
+	res, err := cfg.DB.GetFeeds(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Problem retrieving feeds")
+	}
+
+	respondWithJSON(w, http.StatusOK, response{Feeds: res})
+}
