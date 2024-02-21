@@ -59,6 +59,8 @@ func main() {
 
 	app.Mount("/v1", v1Router)
 
+	go apiCfg.fetchFeeds()
+
 	log.Printf("Serving on port %s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, app))
 }

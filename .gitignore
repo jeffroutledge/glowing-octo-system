@@ -21,4 +21,4 @@
 go.work
 
 .env
-glowing-octo-system
+./glowing-octo-system
