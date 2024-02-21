@@ -16,12 +16,14 @@ func (cfg *apiConfig) handlerCreateFeed(w http.ResponseWriter, r *http.Request, 
 		Url  string `json:"url"`
 	}
 	type response struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Name      string    `json:"name"`
-		Url       string    `json:"url"`
-		UserID    uuid.UUID `json:"user_id"`
+		Feed       database.Feed       `json:"feed"`
+		FeedFollow database.FeedFollow `json:"feed_follow"`
+		// ID        uuid.UUID `json:"id"`
+		// CreatedAt time.Time `json:"created_at"`
+		// UpdatedAt time.Time `json:"updated_at"`
+		// Name      string    `json:"name"`
+		// Url       string    `json:"url"`
+		// UserID    uuid.UUID `json:"user_id"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -34,7 +36,7 @@ func (cfg *apiConfig) handlerCreateFeed(w http.ResponseWriter, r *http.Request, 
 
 	uniqueID, err := uuid.NewUUID()
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Problem with UUID")
+		respondWithError(w, http.StatusInternalServerError, "Problem with feed UUID")
 		return
 	}
 	feed := database.CreateFeedParams{
@@ -45,19 +47,31 @@ func (cfg *apiConfig) handlerCreateFeed(w http.ResponseWriter, r *http.Request, 
 		Url:       sql.NullString{String: params.Url, Valid: true},
 		UserID:    uuid.NullUUID{UUID: u.ID, Valid: true},
 	}
-
 	f, err := cfg.DB.CreateFeed(r.Context(), feed)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Problem adding feed")
 	}
 
+	uniqueID, err = uuid.NewUUID()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Problem with feed followUUID")
+		return
+	}
+	feedFollow := database.CreateFeedFollowParams{
+		ID:        uniqueID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		FeedID:    uuid.NullUUID{UUID: f.ID, Valid: true},
+		UserID:    uuid.NullUUID{UUID: u.ID, Valid: true},
+	}
+	ff, err := cfg.DB.CreateFeedFollow(r.Context(), feedFollow)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Problem adding feed follow")
+	}
+
 	res := response{
-		ID:        f.ID,
-		CreatedAt: f.CreatedAt,
-		UpdatedAt: f.UpdatedAt,
-		Name:      f.Name.String,
-		Url:       f.Url.String,
-		UserID:    f.UserID.UUID,
+		Feed:       f,
+		FeedFollow: ff,
 	}
 
 	respondWithJSON(w, http.StatusOK, res)
