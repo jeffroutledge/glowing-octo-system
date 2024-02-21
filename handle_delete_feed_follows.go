@@ -18,7 +18,7 @@ func (cfg *apiConfig) handlerDeleteFeedFollows(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	_, err = cfg.DB.DeleteFeedFollow(r.Context(), feedFollowID)
+	err = cfg.DB.DeleteFeedFollow(r.Context(), feedFollowID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not delete feed follow")
 		return
