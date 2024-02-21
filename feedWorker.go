@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,6 +14,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jeffroutledge/glowing-octo-system/internal/database"
 )
+
+var ErrDuplicateUrl = errors.New("pq: duplicate key value violates unique constraint \"posts_url_key\"")
 
 type Feed struct {
 	ID            uuid.UUID
@@ -62,7 +66,9 @@ func (cfg *apiConfig) fetchFeeds() {
 
 		for _, f := range feeds {
 			wg.Add(1)
-			go getFeed(f)
+			rss := make(chan Rss)
+			go getRss(f, rss)
+			cfg.addPost(<-rss, f.ID)
 			cfg.DB.MarkFeedFetched(context.Background(), f.ID)
 			wg.Done()
 		}
@@ -73,7 +79,7 @@ func (cfg *apiConfig) fetchFeeds() {
 	}
 }
 
-func getFeed(f database.Feed) Rss {
+func getRss(f database.Feed, rss chan (Rss)) {
 	url := f.Url.String
 	resp, err := http.Get(url)
 	if err != nil {
@@ -87,7 +93,40 @@ func getFeed(f database.Feed) Rss {
 		log.Default().Println(err.Error())
 	}
 
-	fmt.Println(result.Channel.Item[0].Title)
+	rss <- result
+}
 
-	return result
+func (cfg *apiConfig) addPost(rss Rss, feedID uuid.UUID) ([]database.Post, error) {
+	posts := make([]database.Post, 0)
+
+	for _, post := range rss.Channel.Item {
+		uniqueID, err := uuid.NewUUID()
+		if err != nil {
+			return nil, err
+		}
+		pubDate, err := time.Parse(time.RFC1123Z, post.PubDate)
+		if err != nil {
+			log.Default().Println(err.Error())
+		}
+		newPost := database.CreatePostParams{
+			ID:          uniqueID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+			Title:       sql.NullString{String: post.Title, Valid: true},
+			Url:         sql.NullString{String: post.Link, Valid: true},
+			Description: sql.NullString{String: post.Description, Valid: true},
+			PublishedAt: sql.NullTime{Time: pubDate, Valid: true},
+			FeedID:      uuid.NullUUID{UUID: feedID, Valid: true},
+		}
+		p, err := cfg.DB.CreatePost(context.Background(), newPost)
+		if err == ErrDuplicateUrl {
+			fmt.Printf("Already have blog post with URL: %s\n", post.Link)
+			continue
+		} else if err != nil {
+			return nil, err
+		}
+		posts = append(posts, p)
+	}
+
+	return posts, nil
 }
